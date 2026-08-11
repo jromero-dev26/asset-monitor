@@ -49,19 +49,26 @@ def get_asset(asset_id: int):
 
 @app.post("/assets", status_code=201)
 def create_asset(asset_data: AssetCreate):
-    new_id = max((asset.id for asset in assets), default=0) + 1
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO assets (name, asset_type, location, status)
+                VALUES (%s, %s, %s, %s)
+                RETURNING *;
+                """,
+                (
+                    asset_data.name,
+                    asset_data.asset_type,
+                    asset_data.location,
+                    asset_data.status,
+                )
+            )
 
-    new_asset = Asset(
-        id=new_id,
-        name=asset_data.name,
-        asset_type=asset_data.asset_type,
-        location=asset_data.location,
-        status=asset_data.status,
-    )
-
-    assets.append(new_asset)
+            new_asset = cursor.fetchone()
 
     return new_asset
+
 
 @app.put("/assets/{asset_id}")
 def update_asset(asset_id: int, asset_data: AssetCreate):
