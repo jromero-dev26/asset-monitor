@@ -51,7 +51,7 @@ def get_asset(asset_id: int):
 
 @app.post("/assets", status_code=201)
 def create_asset(asset_data: AssetCreate):
-    new_id = max(asset.id for asset in assets) + 1
+    new_id = max((asset.id for asset in assets), default=0) + 1
 
     new_asset = Asset(
         id=new_id,
@@ -64,3 +64,30 @@ def create_asset(asset_data: AssetCreate):
     assets.append(new_asset)
 
     return new_asset
+
+@app.put("/assets/{asset_id}")
+def update_asset(asset_id: int, asset_data: AssetCreate):
+    for index, asset in enumerate(assets):
+        if asset.id == asset_id:
+            updated_asset = Asset(
+                id=asset_id,
+                name=asset_data.name,
+                asset_type=asset_data.asset_type,
+                location=asset_data.location,
+                status=asset_data.status,
+            )
+
+            assets[index] = updated_asset
+            return updated_asset
+
+        raise HTTPException(status_code=404, detail="Asset not found")
+
+@app.delete("/assets/{asset_id}", status_code=204)
+def delete_asset(asset_id: int):
+    for index, asset in enumerate(assets):
+        if asset.id == asset_id:
+            assets.pop(index)
+            return
+
+    raise HTTPException(status_code=404, detail="Asset not found")
+
