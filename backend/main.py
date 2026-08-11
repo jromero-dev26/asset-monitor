@@ -72,27 +72,51 @@ def create_asset(asset_data: AssetCreate):
 
 @app.put("/assets/{asset_id}")
 def update_asset(asset_id: int, asset_data: AssetCreate):
-    for index, asset in enumerate(assets):
-        if asset.id == asset_id:
-            updated_asset = Asset(
-                id=asset_id,
-                name=asset_data.name,
-                asset_type=asset_data.asset_type,
-                location=asset_data.location,
-                status=asset_data.status,
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE assets
+                SET name = %s,
+                    asset_type = %s,
+                    location = %s,
+                    status = %s
+                WHERE id = %s
+                RETURNING *;
+                """,
+                (
+                    asset_data.name,
+                    asset_data.asset_type,
+                    asset_data.location,
+                    asset_data.status,
+                    asset_id,
+                ),
             )
 
-            assets[index] = updated_asset
-            return updated_asset
+            updated_asset = cursor.fetchone()
 
+    if updated_asset is None:
         raise HTTPException(status_code=404, detail="Asset not found")
+
+    return updated_asset
+
 
 @app.delete("/assets/{asset_id}", status_code=204)
 def delete_asset(asset_id: int):
-    for index, asset in enumerate(assets):
-        if asset.id == asset_id:
-            assets.pop(index)
-            return
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                DELETE FROM assets
+                WHERE id = %s
+                RETURNING id;
+                """,
+                (asset_id,),
+            )
 
-    raise HTTPException(status_code=404, detail="Asset not found")
+            deleted_asset = cursor.fetchone()
 
+    if deleted_asset is None:
+        raise HTTPException(status_code=404, detail="Asset not found")
+
+    return
