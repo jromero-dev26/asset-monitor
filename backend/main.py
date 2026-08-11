@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from database import get_connection
+
 
 app = FastAPI()
 
@@ -16,38 +18,34 @@ class AssetCreate(BaseModel):
     location: str
     status: str
 
-assets = [
-    Asset(
-        id=1,
-        name="Pump-101",
-        asset_type="Pump",
-        location="West Facility",
-        status="Running",
-    ),
-    Asset(
-        id=2,
-        name="Compressor-202",
-        asset_type="Compressor",
-        location="North Facility",
-        status="Stopped",
-    ),
-]
-
 @app.get("/")
 def read_root():
     return {"message": "Asset Monitoring API is running!"}
 
 @app.get("/assets")
 def get_assets():
-    return assets
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM assets ORDER BY id;")
+            assets = cursor.fetchall()
+
+        return assets
 
 
-@app.get("/assets{asset_id}")
+@app.get("/assets/{asset_id}")
 def get_asset(asset_id: int):
-    for asset in assets:
-        if asset.id == asset_id:
-            return asset
-    raise HTTPException(status_code=404, detail="Asset not found")
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM assets WHERE id = %s;",
+                (asset_id,),
+            )
+            asset = cursor.fetchone()
+
+        if asset is None:
+            raise HTTPException(status_code=404, detail="Asset no found")
+
+        return asset
 
 @app.post("/assets", status_code=201)
 def create_asset(asset_data: AssetCreate):
