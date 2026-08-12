@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS assets (
     name VARCHAR(100) NOT NULL,
     assset_type VARCHAR(100) NOT NULL,
     location VARCHAR(100) NOT NULL,
-    status VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL
 );
