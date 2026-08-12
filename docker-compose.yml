@@ -20,7 +20,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER} -d $${POSTGRES_DB} && psql -U $${POSTGRES_USER} -d $${POSTGRES_DB} -tAc \"SELECT 1 FROM pg_tables WHERE schemaname='assets'\" | grep -q 1"
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} && psql -U $${POSTGRES_USER} -d $${POSTGRES_DB} -c 'SELECT 1 FROM assets LIMIT 1;' >/dev/null 2>&1"
         ]
       interval: 5s
       timeout: 5s
