@@ -17,10 +17,15 @@ services:
       - ./database/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d $${POSTGRES_DB} && psql -U $${POSTGRES_USER} -d $${POSTGRES_DB} -tAc \"SELECT 1 FROM pg_tables WHERE schemaname='assets'\" | grep -q 1"
+        ]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 12
+      start_period: 30s
 
   backend:
     build:
