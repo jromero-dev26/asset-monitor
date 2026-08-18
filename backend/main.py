@@ -43,7 +43,7 @@ def get_asset(asset_id: int):
             asset = cursor.fetchone()
 
         if asset is None:
-            raise HTTPException(status_code=404, detail="Asset no found")
+            raise HTTPException(status_code=404, detail="Asset not found")
 
         return asset
 
